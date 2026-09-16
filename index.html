@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedCycle.kz — Цифровая экосистема медицинских отходов</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .dark-bg { background-color: #0A1F11; }
+        .card-bg { background-color: #122A1A; }
+        html { scroll-behavior: smooth; }
+        .hidden-panel { opacity: 0.4; pointer-events: none; }
+        .truck-track {
+            transition: left 1.2s ease-in-out, top 1.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="dark-bg text-white font-sans min-h-screen flex flex-col justify-between">
+    <div id="auth-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] hidden items-center justify-center p-4">
+        <div class="card-bg max-w-xl w-full p-6 md:p-8 rounded-3xl shadow-2xl relative">
+            <button onclick="toggleAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white" aria-label="Закрыть">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-[#39FF14]">Подключение к MedCycle</h2>
+                <p class="text-xs text-gray-400 mt-2">Выберите тип участника экосистемы</p>
+            </div>
+            <div id="role-selection" class="grid sm:grid-cols-2 gap-3">
+                <button onclick="selectRole('clinic')" class="p-4 bg-emerald-950/60 border border-emerald-800 rounded-2xl text-left hover:border-[#39FF14]">
+                    <i data-lucide="hospital" class="w-7 h-7 text-[#39FF14] mb-2"></i>
+                    <strong class="block text-sm">Медицинская организация</strong>
+                    <span class="text-xs text-gray-400">On-Demand вызовы, комплаенс и ЭЦП</span>
+                </button>
+                <button onclick="selectRole('factory')" class="p-4 bg-emerald-950/60 border border-emerald-800 rounded-2xl text-left hover:border-amber-400">
+                    <i data-lucide="factory" class="w-7 h-7 text-amber-400 mb-2"></i>
+                    <strong class="block text-sm">Завод-утилизатор</strong>
+                    <span class="text-xs text-gray-400">Логистика, загрузка мощностей и лиды</span>
+                </button>
+            </div>
+            <div id="clinic-onboarding" class="hidden mt-5 space-y-4">
+                <div class="border-t border-emerald-900 pt-4">
+                    <label class="block text-xs text-[#39FF14] font-mono mb-2">Шаг 1: Идентификация через ГБД ЮЛ РК</label>
+                    <div class="flex gap-2">
+                        <input id="auth-bin" maxlength="12" inputmode="numeric" placeholder="12-значный БИН"
+                               class="flex-1 bg-emerald-950 border border-emerald-800 rounded-xl p-3 text-sm font-mono text-center">
+                        <button onclick="verifyAuthBIN()" class="bg-[#39FF14] text-black font-bold px-4 rounded-xl text-xs">Проверить</button>
+                    </div>
+                    <p id="auth-status" class="hidden mt-2 p-2 rounded-xl text-xs font-mono"></p>
+                </div>
+                <div id="license-step" class="hidden border-t border-emerald-900 pt-4">
+                    <label class="block text-xs text-[#39FF14] font-mono mb-2">Шаг 2: Паспорт опасных отходов и лицензия</label>
+                    <input id="license-file" type="file" accept=".pdf,image/*" onchange="scanLicense()"
+                           class="w-full text-xs text-gray-400 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-900 file:px-3 file:py-2 file:text-emerald-200">
+                    <p id="license-status" class="hidden mt-2 p-3 rounded-xl text-xs"></p>
+                </div>
+                <button id="cabinet-btn" onclick="enterCabinet()" disabled
+                        class="w-full bg-emerald-900 text-emerald-600 font-bold py-3 rounded-xl text-sm cursor-not-allowed">
+                    Войти в личный кабинет
+                </button>
+            </div>
+        </div>
+    </div>
+    <header class="border-b border-emerald-900/50 bg-[#0F2617]/80 backdrop-blur px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <i data-lucide="activity" class="text-[#39FF14] w-6 h-6"></i>
+            <span class="text-xl font-bold tracking-wider text-[#39FF14]">MedCycle<span class="text-white text-sm font-normal">.kz</span></span>
+        </div>
+        <nav class="hidden md:flex gap-6 text-xs uppercase tracking-wider text-gray-300">
+            <a href="#about" class="hover:text-[#39FF14] transition">О проекте</a>
+            <a href="#services" class="hover:text-[#39FF14] transition">Услуги</a>
+            <a href="#workspace" class="hover:text-[#39FF14] transition">Рабочая зона</a>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="hidden sm:inline-flex items-center gap-2 text-xs bg-emerald-950/80 px-3 py-1.5 rounded-full border border-emerald-500/30">
+                <span class="w-2 h-2 rounded-full bg-[#39FF14] animate-pulse"></span>
+                <span class="text-gray-300 font-mono">MVP v1.0.0</span>
+            </span>
+            <button onclick="toggleAuthModal()" class="bg-[#39FF14] hover:bg-emerald-400 text-black font-bold px-4 py-2 rounded-xl text-xs">Личный кабинет</button>
+        </div>
+    </header>
+
+    <main class="w-full flex-grow">
+        <section id="about" class="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24 text-center">
+            <div class="inline-flex items-center gap-2 bg-emerald-950/80 px-4 py-1.5 rounded-full border border-emerald-500/30 text-xs text-emerald-400 font-mono mb-6">
+                <span class="w-2 h-2 rounded-full bg-[#39FF14] animate-ping"></span>
+                Пилотный научно-исследовательский ИТ-проект • район Нура
+            </div>
+            <h1 class="text-3xl md:text-5xl font-black leading-tight max-w-4xl mx-auto">
+                Экосистема сквозного контроля и <span class="text-[#39FF14]">взаимной экономической выгоды</span>
+            </h1>
+            <p class="text-gray-400 max-w-2xl mx-auto mt-5 text-sm md:text-base leading-relaxed">
+                Объединяем медицинские учреждения и лицензированные заводы: цифровая заявка, автоматический комплаенс, групповая маршрутизация и трехсторонний акт через ЭЦП.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-3 mt-8">
+                <button onclick="selectRoleAndOpen('clinic')" class="bg-[#39FF14] text-black font-extrabold px-6 py-3 rounded-xl text-sm">Подключить медорганизацию</button>
+                <button onclick="selectRoleAndOpen('factory')" class="border border-emerald-700 text-gray-200 font-bold px-6 py-3 rounded-xl text-sm hover:bg-emerald-950/50">Зарегистрировать завод</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12 text-center">
+                <div class="card-bg rounded-2xl p-5"><p class="text-3xl font-mono text-[#39FF14]">20–30%</p><p class="text-xs text-gray-400 mt-1">экономия на групповых вызовах</p></div>
+                <div class="card-bg rounded-2xl p-5"><p class="text-3xl font-mono text-white">100%</p><p class="text-xs text-gray-400 mt-1">цифровой отчетности</p></div>
+                <div class="card-bg rounded-2xl p-5"><p class="text-3xl font-mono text-amber-400">0</p><p class="text-xs text-gray-400 mt-1">смешанных классов отходов</p></div>
+            </div>
+        </section>
+        <section id="services" class="max-w-6xl mx-auto px-4 md:px-8 pb-12 grid md:grid-cols-2 gap-5">
+            <article class="card-bg rounded-2xl p-6"><i data-lucide="hospital" class="text-[#39FF14] w-7 h-7 mb-4"></i><h2 class="font-bold text-lg">Интерфейс медицинских учреждений</h2><p class="text-sm text-gray-400 mt-2">On-Demand вызов с автоматическим указанием класса опасности и веса. Вызов блокируется без паспорта опасных отходов.</p><button onclick="selectRoleAndOpen('clinic')" class="mt-5 text-[#39FF14] text-sm font-bold">Подключить медорганизацию →</button></article>
+            <article class="card-bg rounded-2xl p-6"><i data-lucide="factory" class="text-amber-400 w-7 h-7 mb-4"></i><h2 class="font-bold text-lg">Логистический комплекс для заводов</h2><p class="text-sm text-gray-400 mt-2">MedCycle-AI собирает малые заявки района Нура в кольцевой трек, оцифровывает журналы и стабилизирует загрузку мощностей.</p><button onclick="selectRoleAndOpen('factory')" class="mt-5 text-amber-400 text-sm font-bold">Зарегистрировать завод →</button></article>
+        </section>
+        <section id="workspace" class="max-w-6xl mx-auto px-4 md:px-8 pb-8">
+            <div class="flex items-center gap-3 mb-5"><div class="h-px bg-emerald-900 flex-1"></div><h2 class="text-xs text-gray-400 uppercase tracking-widest">Рабочая зона заявки</h2><div class="h-px bg-emerald-900 flex-1"></div></div>
+        </section>
+        <div class="max-w-6xl w-full mx-auto px-4 md:px-8 pb-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            <div id="step-bin" class="card-bg p-6 rounded-2xl border border-emerald-900 shadow-xl transition-all duration-300">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2.5 bg-emerald-950 rounded-xl border border-emerald-800">
+                        <i data-lucide="shield-check" class="text-[#39FF14] w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold">Шаг 1: Автоматическая верификация БИН</h2>
+                        <p class="text-xs text-gray-400">Интеграция с государственным реестром юридических лиц РК</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-grow">
+                        <input type="text" id="bin-input" maxlength="12" placeholder="Введите 12-значный БИН клиники"
+                               class="w-full bg-emerald-950/60 border border-emerald-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#39FF14] font-mono tracking-widest text-center">
+                    </div>
+                    <button onclick="verifyBIN()" class="bg-[#39FF14] hover:bg-emerald-400 text-black font-bold px-6 py-3 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-emerald-500/20 cursor-pointer">
+                        Проверить БИН
+                    </button>
+                </div>
+
+                <div id="bin-status" class="mt-4 hidden p-3 rounded-xl border text-sm flex items-center gap-3"></div>
+            </div>
+
+            <div id="step-order" class="card-bg p-6 rounded-2xl border border-emerald-900/30 opacity-40 pointer-events-none transition-all duration-300">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="p-2.5 bg-emerald-950 rounded-xl border border-emerald-800">
+                        <i data-lucide="truck" class="text-[#39FF14] w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold">Шаг 2: Экспресс-вызов службы утилизации</h2>
+                        <p class="text-xs text-gray-400">Алгоритмический сбор заявок в районе Нура г. Астана</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1.5 uppercase font-semibold tracking-wider">Классификация отходов (МЗ РК)</label>
+                            <select id="waste-class" onchange="handleClassChange()" class="w-full bg-emerald-950 border border-emerald-800 rounded-xl p-3 text-sm focus:outline-none focus:border-[#39FF14]">
+                                <option value="none">-- Выберите класс отходов --</option>
+                                <option value="A">Класс А (Неопасные, вторичное сырье / пластик)</option>
+                                <option value="B">Класс Б (Опасные инфицированные / шприцы, маски)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1.5 uppercase font-semibold tracking-wider">Фактический вес (кг)</label>
+                            <input type="number" id="waste-weight" placeholder="Например: 5" min="1" class="w-full bg-emerald-950 border border-emerald-800 rounded-xl p-3 text-sm focus:outline-none focus:border-[#39FF14]">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col justify-center">
+                        <div id="warning-box" class="bg-emerald-950/40 border border-emerald-900 p-4 rounded-xl text-xs text-gray-400 flex items-start gap-3 min-h-[110px]">
+                            <i data-lucide="info" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+                            <p id="warning-text">Пожалуйста, выберите класс отходов. Информационная система MedCycle автоматически сопоставляет типы отходов с требованиями СанПиН РК.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="triggerOrder()" class="w-full mt-6 bg-emerald-900 text-emerald-400 border border-emerald-700 font-bold py-3.5 rounded-xl text-sm transition-all duration-200 cursor-not-allowed" id="order-btn" disabled>
+                    Сформировать маршрут и Акт
+                </button>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-6">
+            <div class="card-bg p-5 rounded-2xl border border-emerald-900 flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">ИИ-Модуль Маршрутизации</span>
+                    <span class="text-[10px] bg-emerald-950 text-[#39FF14] px-2 py-0.5 rounded border border-emerald-800 font-mono">MedCycle-AI</span>
+                </div>
+
+                <div class="w-full h-44 bg-[#0A170F] rounded-xl border border-emerald-950 relative overflow-hidden flex items-center justify-center">
+                    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#39FF14 1px, transparent 1px); background-size: 16px 16px;"></div>
+
+                    <div class="text-center z-10 px-4 transition-all duration-500" id="map-status">
+                        <i data-lucide="map-pin" class="w-8 h-8 text-emerald-800 mx-auto mb-2 animate-bounce"></i>
+                        <p class="text-xs text-gray-500 font-mono">Ожидание построения логистического трека района Нура</p>
+                    </div>
+
+                    <div id="truck-sim" class="truck-track absolute left-4 top-1/2 -translate-y-1/2 hidden flex items-center gap-2 bg-black/80 px-2 py-1 rounded-lg border border-[#39FF14]/40 text-[10px] font-mono z-20">
+                        <i data-lucide="truck" class="w-3.5 h-3.5 text-[#39FF14]"></i>
+                        <span>Спецборт ТОО Эколайф</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-center text-xs font-mono">
+                    <div class="bg-emerald-950/60 p-2 rounded-lg border border-emerald-900/50">
+                        <p class="text-gray-500 text-[10px]">Оптимизация ГСМ</p>
+                        <p id="stat-gsm" class="text-gray-400 font-bold mt-0.5">0%</p>
+                    </div>
+                    <div class="bg-emerald-950/60 p-2 rounded-lg border border-emerald-900/50">
+                        <p class="text-gray-500 text-[10px]">Статус ЭДО</p>
+                        <p id="stat-edo" class="text-gray-400 font-bold mt-0.5">Ожидание</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-bg p-5 rounded-2xl border border-emerald-900 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">ЭЦП — Подписание акта</span>
+                    <span id="signature-badge" class="text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800 font-mono">Ожидание</span>
+                </div>
+
+                <div id="signature-panel" class="bg-emerald-950/40 border border-emerald-900 rounded-xl p-4 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[11px] uppercase tracking-wider text-gray-400">Ключ ЭЦП</span>
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-[#39FF14]"></i>
+                    </div>
+                    <div class="font-mono text-xs text-gray-300">#KK_SA_1482 / Действующий сертифицированный ключ</div>
+                    <div class="mt-2 text-xs text-gray-400">Подписывает: <span id="signature-name" class="text-[#39FF14]">Ожидание подтверждения</span></div>
+                    <div id="signature-status" class="text-xs text-gray-300">Приложение ожидает закрытия маршрута и загрузки акта.</div>
+                </div>
+
+                <div id="order-result" class="hidden bg-emerald-950/50 border border-emerald-900 rounded-xl p-4 text-xs text-gray-300">
+                    <div class="font-bold text-[#39FF14] mb-2">Формирование маршрута завершено</div>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Клиника: Астана Медицинский Центр</li>
+                        <li>Сбор: <span id="route-summary">Класс A / 5 кг</span></li>
+                        <li>Транспорт: Эколайф • 20 мин до точки приема</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const binInput = document.getElementById('bin-input');
+        const binStatus = document.getElementById('bin-status');
+        const stepOrder = document.getElementById('step-order');
+        const orderBtn = document.getElementById('order-btn');
+        const wasteClass = document.getElementById('waste-class');
+        const wasteWeight = document.getElementById('waste-weight');
+        const warningText = document.getElementById('warning-text');
+        const mapStatus = document.getElementById('map-status');
+        const truckSim = document.getElementById('truck-sim');
+        const statGsm = document.getElementById('stat-gsm');
+        const statEdo = document.getElementById('stat-edo');
+        const signatureBadge = document.getElementById('signature-badge');
+        const signatureName = document.getElementById('signature-name');
+        const signatureStatus = document.getElementById('signature-status');
+        const orderResult = document.getElementById('order-result');
+        const routeSummary = document.getElementById('route-summary');
+
+        let binVerified = false;
+        let authBinVerified = false;
+
+        function toggleAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            const isHidden = modal.classList.contains('hidden');
+            modal.classList.toggle('hidden', !isHidden);
+            modal.classList.toggle('flex', isHidden);
+            if (isHidden && window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
+        function selectRoleAndOpen(role) {
+            const modal = document.getElementById('auth-modal');
+            if (modal.classList.contains('hidden')) {
+                toggleAuthModal();
+            }
+            selectRole(role);
+        }
+
+        function selectRole(role) {
+            const clinicForm = document.getElementById('clinic-onboarding');
+            const roleSelection = document.getElementById('role-selection');
+            if (role === 'factory') {
+                alert('Регистрация завода-утилизатора доступна после ручной верификации лицензии в Минэкологии РК.');
+                return;
+            }
+            roleSelection.classList.add('hidden');
+            clinicForm.classList.remove('hidden');
+        }
+
+        function verifyAuthBIN() {
+            const input = document.getElementById('auth-bin');
+            const status = document.getElementById('auth-status');
+            const licenseStep = document.getElementById('license-step');
+            const value = input.value.trim();
+            status.className = 'mt-2 p-2 rounded-xl text-xs font-mono';
+            if (!/^\d{12}$/.test(value) || value[0] === '0') {
+                status.classList.add('bg-red-950/50', 'border', 'border-red-800', 'text-red-300');
+                status.textContent = 'БИН должен состоять из 12 цифр и начинаться не с нуля.';
+                authBinVerified = false;
+                return;
+            }
+            status.classList.add('bg-emerald-900/40', 'border', 'border-emerald-700', 'text-emerald-300');
+            status.textContent = "Организация верифицирована: ТОО «Стоматология Нура-Дент».";
+            status.classList.remove('hidden');
+            licenseStep.classList.remove('hidden');
+            authBinVerified = true;
+        }
+
+        function scanLicense() {
+            const file = document.getElementById('license-file').files[0];
+            const status = document.getElementById('license-status');
+            const button = document.getElementById('cabinet-btn');
+            if (!file || !authBinVerified) {
+                return;
+            }
+            status.className = 'mt-2 p-3 rounded-xl text-xs bg-emerald-950 border border-emerald-800 text-emerald-300';
+            status.textContent = 'ИИ-анализ завершен: лицензия действующая, паспорт опасных отходов принят.';
+            status.classList.remove('hidden');
+            button.disabled = false;
+            button.className = 'w-full bg-[#39FF14] text-black font-bold py-3 rounded-xl text-sm cursor-pointer';
+        }
+
+        function enterCabinet() {
+            if (!authBinVerified || !document.getElementById('license-file').files.length) {
+                return;
+            }
+            toggleAuthModal();
+            document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function setBinStatus(success, text) {
+            binStatus.classList.remove('hidden', 'border-emerald-700/60', 'bg-emerald-900/50', 'text-emerald-300', 'border-red-700/60', 'bg-red-900/40', 'text-red-200');
+            if (success) {
+                binStatus.classList.add('border-emerald-700/60', 'bg-emerald-900/50', 'text-emerald-300');
+                binStatus.innerHTML = '<i data-lucide="check-circle" class="w-4 h-4"></i><span>' + text + '</span>';
+            } else {
+                binStatus.classList.add('border-red-700/60', 'bg-red-900/40', 'text-red-200');
+                binStatus.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4"></i><span>' + text + '</span>';
+            }
+            binStatus.classList.remove('hidden');
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
+        function unlockOrderStep() {
+            stepOrder.classList.remove('opacity-40', 'pointer-events-none');
+            stepOrder.classList.add('opacity-100');
+        }
+
+        function updateOrderButtonState() {
+            const hasValidClass = wasteClass.value !== 'none';
+            const hasWeight = Number(wasteWeight.value) > 0;
+            if (binVerified && hasValidClass && hasWeight) {
+                orderBtn.disabled = false;
+                orderBtn.classList.remove('bg-emerald-900', 'text-emerald-400', 'border-emerald-700', 'cursor-not-allowed');
+                orderBtn.classList.add('bg-[#39FF14]', 'text-black', 'border-transparent', 'cursor-pointer', 'shadow-lg', 'shadow-emerald-500/20');
+            } else {
+                orderBtn.disabled = true;
+                orderBtn.classList.remove('bg-[#39FF14]', 'text-black', 'border-transparent', 'cursor-pointer', 'shadow-lg', 'shadow-emerald-500/20');
+                orderBtn.classList.add('bg-emerald-900', 'text-emerald-400', 'border-emerald-700', 'cursor-not-allowed');
+            }
+        }
+
+        function handleClassChange() {
+            const classValue = wasteClass.value;
+            if (classValue === 'A') {
+                warningText.textContent = 'Класс А: отходы неопасные, допускается временное хранение до 24 часов и вывоз в отдельный контейнер для вторичного сырья.';
+            } else if (classValue === 'B') {
+                warningText.textContent = 'Класс Б: инфицированные/опасные отходы требуют предписания СанПиН, обязательную дезинфекцию и закрытые контейнеры с маркировкой.';
+            } else {
+                warningText.textContent = 'Пожалуйста, выберите класс отходов. Информационная система MedCycle автоматически сопоставляет типы отходов с требованиями СанПиН РК.';
+            }
+            updateOrderButtonState();
+        }
+
+        function verifyBIN() {
+            const value = binInput.value.trim();
+            if (!/^\d{12}$/.test(value)) {
+                setBinStatus(false, 'Некорректный БИН. Необходимо ввести 12 цифр без пробелов.');
+                binVerified = false;
+                updateOrderButtonState();
+                return;
+            }
+
+            const digits = value.split('').map(Number);
+            const isLikelyValid = digits[0] !== 0 && digits.some(d => d > 0);
+            if (!isLikelyValid) {
+                setBinStatus(false, 'БИН не соответствует формату юридического лица РК.');
+                binVerified = false;
+                updateOrderButtonState();
+                return;
+            }
+
+            setBinStatus(true, 'БИН ' + value + ' успешно подтвержден. Организация доступна для оформления заявки.');
+            binVerified = true;
+            unlockOrderStep();
+            updateOrderButtonState();
+        }
+
+        function triggerOrder() {
+            if (!binVerified || wasteClass.value === 'none' || Number(wasteWeight.value) <= 0) {
+                setBinStatus(false, 'Для формирования маршрута необходимо проверить БИН и заполнить карту отходов.');
+                return;
+            }
+
+            const className = wasteClass.value === 'A' ? 'Класс A' : 'Класс B';
+            const weight = Number(wasteWeight.value);
+            const tripMinutes = Math.max(15, Math.min(45, Math.round(weight * 4 + (wasteClass.value === 'B' ? 8 : 0))));
+
+            routeSummary.textContent = className + ' / ' + weight + ' кг';
+            orderResult.classList.remove('hidden');
+            orderResult.classList.add('block');
+
+            mapStatus.innerHTML = '<i data-lucide="route" class="w-8 h-8 text-[#39FF14] mx-auto mb-2 animate-pulse"></i><p class="text-xs text-[#39FF14] font-mono">Построен маршрут • точка сбора: район Нура • ETA ' + tripMinutes + ' мин</p>';
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+
+            truckSim.classList.remove('hidden');
+            truckSim.style.left = '6%';
+            truckSim.style.top = '58%';
+            truckSim.style.transform = 'translateY(-50%)';
+            truckSim.style.opacity = '1';
+
+            let progress = 0;
+            const animation = setInterval(() => {
+                progress += 14;
+                const x = Math.min(78, 6 + progress);
+                truckSim.style.left = x + '%';
+                if (progress >= 72) {
+                    clearInterval(animation);
+                    truckSim.style.left = '82%';
+                    truckSim.style.top = '32%';
+                }
+            }, 180);
+
+            let gsm = 0;
+            const gsmTimer = setInterval(() => {
+                gsm += 8;
+                statGsm.textContent = Math.min(gsm, 91) + '%';
+                if (gsm >= 91) {
+                    clearInterval(gsmTimer);
+                }
+            }, 140);
+
+            signatureBadge.textContent = 'Подписано';
+            signatureBadge.classList.remove('bg-emerald-950', 'text-emerald-400');
+            signatureBadge.classList.add('bg-[#39FF14]', 'text-black');
+            signatureName.textContent = 'ТОО «ЭкоЛайф» / Директор С. Байтуров';
+            signatureStatus.textContent = 'ЭЦП подтверждена. Действующий квалифицированный ключ обработан и актуален для оформления акта.';
+
+            setTimeout(() => {
+                statEdo.textContent = 'Подписано';
+                statEdo.classList.add('text-[#39FF14]');
+            }, 700);
+        }
+
+        binInput.addEventListener('input', function () {
+            const value = binInput.value.replace(/\D/g, '').slice(0, 12);
+            binInput.value = value;
+            if (value.length === 12) {
+                verifyBIN();
+            }
+        });
+
+        wasteWeight.addEventListener('input', updateOrderButtonState);
+        wasteClass.addEventListener('change', updateOrderButtonState);
+        handleClassChange();
+        updateOrderButtonState();
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
