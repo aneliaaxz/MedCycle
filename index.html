@@ -55,8 +55,8 @@
                 </button>
                 <button onclick="selectRole('factory')" class="p-4 bg-emerald-950/60 border border-emerald-800 rounded-2xl text-left hover:border-amber-400">
                     <i data-lucide="factory" class="w-7 h-7 text-amber-400 mb-2"></i>
-                    <strong class="block text-sm">Завод-утилизатор</strong>
-                    <span class="text-xs text-gray-400">Логистика, загрузка мощностей и лиды</span>
+                    <strong class="block text-sm">Компания по утилизации / завод</strong>
+                    <span class="text-xs text-gray-400">Лицензия, спецтранспорт и групповые маршруты</span>
                 </button>
             </div>
             <div id="clinic-onboarding" class="hidden mt-5 space-y-4">
@@ -70,14 +70,18 @@
                     <p id="auth-status" class="hidden mt-2 p-2 rounded-xl text-xs font-mono"></p>
                 </div>
                 <div id="license-step" class="hidden border-t border-emerald-900 pt-4">
-                    <label class="block text-xs text-[#39FF14] font-mono mb-2">Шаг 2: Паспорт опасных отходов и лицензия</label>
+                    <label class="block text-xs text-[#39FF14] font-mono mb-2">Шаг 2: ИИ-верификация государственной лицензии</label>
                     <input id="license-file" type="file" accept=".pdf,image/*" onchange="scanLicense()"
                            class="w-full text-xs text-gray-400 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-900 file:px-3 file:py-2 file:text-emerald-200">
                     <p id="license-status" class="hidden mt-2 p-3 rounded-xl text-xs"></p>
                 </div>
+                <label class="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
+                    <input id="terms-agree" type="checkbox" onchange="updateCabinetButton()" class="mt-0.5 accent-emerald-600">
+                    <span>Подтверждаю достоверность данных и согласие с регламентом СанПиН РК о раздельном сборе отходов.</span>
+                </label>
                 <button id="cabinet-btn" onclick="enterCabinet()" disabled
                         class="w-full bg-emerald-900 text-emerald-600 font-bold py-3 rounded-xl text-sm cursor-not-allowed">
-                    Войти в личный кабинет
+                    Зайти в личный кабинет
                 </button>
             </div>
         </div>
@@ -326,24 +330,35 @@
             status.classList.remove('hidden');
             licenseStep.classList.remove('hidden');
             authBinVerified = true;
+            updateCabinetButton();
         }
 
         function scanLicense() {
             const file = document.getElementById('license-file').files[0];
             const status = document.getElementById('license-status');
-            const button = document.getElementById('cabinet-btn');
             if (!file || !authBinVerified) {
                 return;
             }
             status.className = 'mt-2 p-3 rounded-xl text-xs bg-emerald-950 border border-emerald-800 text-emerald-300';
             status.textContent = 'ИИ-анализ завершен: лицензия действующая, паспорт опасных отходов принят.';
             status.classList.remove('hidden');
-            button.disabled = false;
-            button.className = 'w-full bg-[#39FF14] text-black font-bold py-3 rounded-xl text-sm cursor-pointer';
+            updateCabinetButton();
+        }
+
+        function updateCabinetButton() {
+            const button = document.getElementById('cabinet-btn');
+            const agreement = document.getElementById('terms-agree');
+            const license = document.getElementById('license-file');
+            const ready = authBinVerified && license.files.length > 0 && agreement.checked;
+            button.disabled = !ready;
+            button.className = ready
+                ? 'w-full bg-[#39FF14] text-black font-bold py-3 rounded-xl text-sm cursor-pointer'
+                : 'w-full bg-emerald-900 text-emerald-600 font-bold py-3 rounded-xl text-sm cursor-not-allowed';
         }
 
         function enterCabinet() {
-            if (!authBinVerified || !document.getElementById('license-file').files.length) {
+            const agreement = document.getElementById('terms-agree');
+            if (!authBinVerified || !document.getElementById('license-file').files.length || !agreement.checked) {
                 return;
             }
             toggleAuthModal();
