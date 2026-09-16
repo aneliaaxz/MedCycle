@@ -7,13 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .dark-bg { background-color: #0A1F11; }
-        .card-bg { background-color: #122A1A; }
+        .dark-bg { background-color: #F3F7F4; }
+        .card-bg { background-color: #FFFFFF; border: 1px solid #E2EFE5; box-shadow: 0 10px 30px -5px rgba(158, 194, 169, 0.15); }
         html { scroll-behavior: smooth; }
         .hidden-panel { opacity: 0.4; pointer-events: none; }
         .truck-track {
             transition: left 1.2s ease-in-out, top 1.2s ease-in-out;
         }
+        body { color: #064E3B; }
+        header { background-color: rgba(255, 255, 255, 0.9) !important; border-color: #D1FAE5 !important; }
+        .text-white { color: #064E3B !important; }
+        .text-gray-200, .text-gray-300, .text-gray-400, .text-gray-500 {
+            color: #166534 !important;
+        }
+        .border-emerald-900, .border-emerald-900\/30, .border-emerald-900\/50,
+        .border-emerald-800, .border-emerald-700 {
+            border-color: #D1FAE5 !important;
+        }
+        .bg-emerald-950, .bg-emerald-950\/40, .bg-emerald-950\/50,
+        .bg-emerald-950\/60, .bg-emerald-950\/80, .bg-emerald-900 {
+            background-color: #F0FDF4 !important;
+        }
+        .bg-\[\#0A170F\] { background-color: #ECFDF5 !important; }
+        .bg-black\/80 { background-color: rgba(255, 255, 255, 0.9) !important; }
+        .bg-black\/90 { background-color: rgba(6, 78, 59, 0.25) !important; }
+        .text-\[\#39FF14\] { color: #16A34A !important; }
+        .bg-\[\#39FF14\] { background-color: #39FF14 !important; }
+        .text-emerald-400, .text-emerald-300 { color: #15803D !important; }
+        .text-amber-400 { color: #B45309 !important; }
     </style>
 </head>
 <body class="dark-bg text-white font-sans min-h-screen flex flex-col justify-between">
@@ -472,5 +493,8 @@
             window.lucide.createIcons();
         }
     </script>
+    <footer class="border-t border-emerald-100 bg-white px-6 py-4 text-center text-xs text-emerald-700 font-mono font-bold">
+        Республиканский конкурс научных проектов «Дарын» • Астана, район Нура, 2026 г.
+    </footer>
 </body>
 </html>
