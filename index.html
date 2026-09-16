@@ -89,8 +89,8 @@
         </div>
         <nav class="hidden md:flex gap-6 text-xs uppercase tracking-wider text-gray-300">
             <a href="#about" class="hover:text-[#39FF14] transition">О проекте</a>
-            <a href="#services" class="hover:text-[#39FF14] transition">Услуги</a>
-            <a href="#workspace" class="hover:text-[#39FF14] transition">Рабочая зона</a>
+            <a href="#services" class="hover:text-[#39FF14] transition">Возможности</a>
+            <a href="#workspace" class="hover:text-[#39FF14] transition">Личный кабинет</a>
         </div>
         <div class="flex items-center gap-2">
             <span class="hidden sm:inline-flex items-center gap-2 text-xs bg-emerald-950/80 px-3 py-1.5 rounded-full border border-emerald-500/30">
@@ -105,27 +105,28 @@
         <section id="about" class="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24 text-center">
             <div class="inline-flex items-center gap-2 bg-emerald-950/80 px-4 py-1.5 rounded-full border border-emerald-500/30 text-xs text-emerald-400 font-mono mb-6">
                 <span class="w-2 h-2 rounded-full bg-[#39FF14] animate-ping"></span>
-                Пилотный научно-исследовательский ИТ-проект • район Нура
+                Компьютерная модель для конкурса научных проектов «Дарын»
             </div>
             <h1 class="text-3xl md:text-5xl font-black leading-tight max-w-4xl mx-auto">
-                Экосистема сквозного контроля и <span class="text-[#39FF14]">взаимной экономической выгоды</span>
+                Интеллектуальная утилизация <span class="text-[#39FF14]">медицинских отходов</span> в Астане
             </h1>
             <p class="text-gray-400 max-w-2xl mx-auto mt-5 text-sm md:text-base leading-relaxed">
-                Объединяем медицинские учреждения и лицензированные заводы: цифровая заявка, автоматический комплаенс, групповая маршрутизация и трехсторонний акт через ЭЦП.
+                MedCycle — B2B цифровая экосистема для клиник и утилизаторов района Нура. Автоматизируем умные маршруты, сквозной учет отходов и электронный документооборот через ЭЦП.
             </p>
             <div class="flex flex-col sm:flex-row justify-center gap-3 mt-8">
                 <button onclick="selectRoleAndOpen('clinic')" class="bg-[#39FF14] text-black font-extrabold px-6 py-3 rounded-xl text-sm">Подключить медорганизацию</button>
                 <button onclick="selectRoleAndOpen('factory')" class="border border-emerald-700 text-gray-200 font-bold px-6 py-3 rounded-xl text-sm hover:bg-emerald-950/50">Зарегистрировать завод</button>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12 text-center">
-                <div class="card-bg rounded-2xl p-5"><p class="text-3xl font-mono text-[#39FF14]">20–30%</p><p class="text-xs text-gray-400 mt-1">экономия на групповых вызовах</p></div>
+                <div class="card-bg rounded-2xl p-5"><p class="text-3xl font-mono text-[#39FF14]">до 35%</p><p class="text-xs text-gray-400 mt-1">экономия ГСМ на ИИ-маршрутах</p></div>
                 <div class="card-bg rounded-2xl p-5"><p class="text-3xl font-mono text-white">100%</p><p class="text-xs text-gray-400 mt-1">цифровой отчетности</p></div>
                 <div class="card-bg rounded-2xl p-5"><p class="text-3xl font-mono text-amber-400">0</p><p class="text-xs text-gray-400 mt-1">смешанных классов отходов</p></div>
             </div>
         </section>
-        <section id="services" class="max-w-6xl mx-auto px-4 md:px-8 pb-12 grid md:grid-cols-2 gap-5">
+        <section id="services" class="max-w-6xl mx-auto px-4 md:px-8 pb-12 grid md:grid-cols-3 gap-5">
             <article class="card-bg rounded-2xl p-6"><i data-lucide="hospital" class="text-[#39FF14] w-7 h-7 mb-4"></i><h2 class="font-bold text-lg">Интерфейс медицинских учреждений</h2><p class="text-sm text-gray-400 mt-2">On-Demand вызов с автоматическим указанием класса опасности и веса. Вызов блокируется без паспорта опасных отходов.</p><button onclick="selectRoleAndOpen('clinic')" class="mt-5 text-[#39FF14] text-sm font-bold">Подключить медорганизацию →</button></article>
             <article class="card-bg rounded-2xl p-6"><i data-lucide="factory" class="text-amber-400 w-7 h-7 mb-4"></i><h2 class="font-bold text-lg">Логистический комплекс для заводов</h2><p class="text-sm text-gray-400 mt-2">MedCycle-AI собирает малые заявки района Нура в кольцевой трек, оцифровывает журналы и стабилизирует загрузку мощностей.</p><button onclick="selectRoleAndOpen('factory')" class="mt-5 text-amber-400 text-sm font-bold">Зарегистрировать завод →</button></article>
+            <article class="card-bg rounded-2xl p-6"><i data-lucide="cloud-cog" class="text-emerald-600 w-7 h-7 mb-4"></i><h2 class="font-bold text-lg">Облачная статистика и ЭДО</h2><p class="text-sm text-gray-400 mt-2">Автоматический учет веса, архив актов ЭЦП и прозрачная аналитика эко-баланса для клиник, СЭС и эко-инспекций.</p><button onclick="document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' })" class="mt-5 text-emerald-600 text-sm font-bold">Открыть рабочую зону →</button></article>
         </section>
         <section id="workspace" class="max-w-6xl mx-auto px-4 md:px-8 pb-8">
             <div class="flex items-center gap-3 mb-5"><div class="h-px bg-emerald-900 flex-1"></div><h2 class="text-xs text-gray-400 uppercase tracking-widest">Рабочая зона заявки</h2><div class="h-px bg-emerald-900 flex-1"></div></div>
